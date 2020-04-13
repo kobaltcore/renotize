@@ -133,6 +133,7 @@ def cli(ctx, project, config, debug):
 @cli.command()
 @click.pass_context
 def unpack_app(ctx):
+    logger.info("Unpacking App")
     zip_file = ctx.obj["project"] + ".zip"
     folder_name = ctx.obj["project"]
 
@@ -148,6 +149,7 @@ def unpack_app(ctx):
 @cli.command()
 @click.pass_context
 def sign_app(ctx):
+    logger.info("Signing App")
     with open("entitlements.plist", "w") as f:
         f.write(textwrap.dedent("""
             <?xml version="1.0" encoding="UTF-8"?>
@@ -187,6 +189,7 @@ def sign_app(ctx):
 @cli.command()
 @click.pass_context
 def notarize_app(ctx):
+    logger.info("Notarizing App")
     zip_file = "{}-app.zip".format(ctx.obj["project"])
 
     app_path = sorted(glob(os.path.join(ctx.obj["project"], "*.app")))[0]
@@ -226,6 +229,7 @@ def notarize_app(ctx):
 @cli.command()
 @click.pass_context
 def staple_app(ctx):
+    logger.info("Stapling App")
     app_path = sorted(glob(os.path.join(ctx.obj["project"], "*.app")))[0]
 
     cmd = ["xcrun",
@@ -248,6 +252,7 @@ def staple_app(ctx):
 @cli.command()
 @click.pass_context
 def pack_dmg(ctx):
+    logger.info("Packing DMG")
     cmd = ["hdiutil",
            "create",
            "-fs HFS+",
@@ -270,6 +275,7 @@ def pack_dmg(ctx):
 @cli.command()
 @click.pass_context
 def sign_dmg(ctx):
+    logger.info("Signing DMG")
     cmd = ["codesign",
            "--timestamp",
            "-s {}".format(ctx.obj["config"]["identity"]),
@@ -290,6 +296,7 @@ def sign_dmg(ctx):
 @cli.command()
 @click.pass_context
 def notarize_dmg(ctx):
+    logger.info("Notarizing DMG")
     cmd = ["xcrun",
            "altool",
            ctx.obj["config"]["altool_extra"],
@@ -323,6 +330,7 @@ def notarize_dmg(ctx):
 @cli.command()
 @click.pass_context
 def staple_dmg(ctx):
+    logger.info("Stapling DMG")
     cmd = ["xcrun",
            "stapler",
            "staple",
@@ -420,6 +428,7 @@ def status(ctx, uid):
 @cli.command()
 @click.pass_context
 def full_run(ctx):
+    logger.info("Full Notarization Run")
     ctx.invoke(unpack_app)
     ctx.invoke(sign_app)
     uid = ctx.invoke(notarize_app)
