@@ -9,7 +9,7 @@ import logging
 import textwrap
 from glob import glob
 from zipfile import ZipFile, ZIP_DEFLATED
-from subprocess import run, Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT
 
 ### Logging ###
 import logzero
@@ -27,7 +27,7 @@ from tqdm import tqdm
 
 
 uid_pattern = r"RequestUUID = ([A-z0-9-]+)"
-status_pattern = r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \+\d{4}) ([A-z0-9-]+) (success|invalid|in progress)(?: (\d)\s+(Package (?:Approved|Invalid)))?"
+status_pattern = r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \+\d{4}) ([A-z0-9-]+) (success|invalid|in progress)(?: (\d)\s+(Package (?:Approved|Invalid)))?"  # noqa: E501
 
 
 class AliasedGroup(click.Group):
@@ -63,25 +63,19 @@ def get_members_zip(zip):
 
 
 def zipdir(zipname, dirname):
-    # Get total data size in bytes so we can report on progress
     total = 0
     for root, dirs, files in os.walk(dirname):
         for fname in files:
             path = os.path.join(root, fname)
             total += os.path.getsize(path)
 
-    # Get the archive directory name
-    basename = os.path.basename(dirname)
-
     z = ZipFile(zipname, "w", ZIP_DEFLATED)
 
-    # Current data byte count
     current = 0
     with tqdm(total=total, unit_scale=True, unit="B") as pbar:
         for root, dirs, files in os.walk(dirname):
             for fname in files:
                 path = os.path.join(root, fname)
-                percent = 100 * current / total
                 size = os.path.getsize(path)
                 pbar.update(size)
                 z.write(path)
@@ -245,7 +239,7 @@ def staple_app(ctx):
         logger.debug(str(line.strip(), "utf-8"))
 
     if proc.returncode:
-        logger.error("An error occured while stapling the notarization ticket to the app, run with --debug for more details.")
+        logger.error("An error occured while stapling the notarization ticket to the app, run with --debug for more details.")  # noqa: E501
 
 
 @cli.command()
@@ -340,7 +334,7 @@ def staple_dmg(ctx):
         logger.debug(str(line.strip(), "utf-8"))
 
     if proc.returncode:
-        logger.error("An error occured while stapling the notarization ticket to the DMG, run with --debug for more details.")
+        logger.error("An error occured while stapling the notarization ticket to the DMG, run with --debug for more details.")  # noqa: E501
 
 
 @cli.command()
@@ -402,7 +396,7 @@ def status(ctx, uid):
 
     try:
         status = data["notarization-info"]["Status"]
-    except:
+    except:  # noqa: E722
         logger.error("The UID either does not exist or was not submitted yet.")
         return
 
