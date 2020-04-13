@@ -102,7 +102,7 @@ def cli(ctx, project, config, debug):
 
     \b
     The fully automatic process can be started using:
-        renotize <name_of_ZIP_file_without_extension> full-run
+        renotize -c <path_to_config> <path_to_ZIP_file> full-run
     """
     ctx.ensure_object(dict)
 
@@ -128,8 +128,6 @@ def cli(ctx, project, config, debug):
 
     if not ctx.obj["config"]["altool_extra"]:
         ctx.obj["config"]["altool_extra"] = ""
-
-    # TODO: Validate config items
 
 
 @cli.command()
