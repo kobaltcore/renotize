@@ -90,7 +90,8 @@ def zipdir(zipname, dirname):
 @click.option("-d/-nd", "--debug/--no-debug", default=False,
               help="Print debug information or only regular output")
 def cli(ctx, project, config, debug):
-    """
+    """A utility script for quickly and automatically notarizing Ren'Py applications for macOS.
+
     Commands can be abbreviated by the shortest unique string.
 
     \b
@@ -98,6 +99,10 @@ def cli(ctx, project, config, debug):
         unpack-app -> u
         sign-app -> sign-a
         sign-dmg -> sign-d
+
+    \b
+    The fully automatic process can be started using:
+        renotize <name_of_ZIP_file_without_extension> full-run
     """
     ctx.ensure_object(dict)
 
