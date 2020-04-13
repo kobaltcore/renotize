@@ -9,7 +9,7 @@ repository = "https://github.com/kobaltcore/renotize"
 homepage = "https://github.com/kobaltcore/renotize"
 
 [tool.poetry.scripts]
-renutil = "renotize.renotize:cli"
+renotize = "renotize.renotize:cli"
 
 [tool.poetry.dependencies]
 python = "^3.5"
