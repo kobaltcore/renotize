@@ -12,8 +12,11 @@ $ pip install renotize
 Please note that reNotize requires Python 3 and will not provide backwards compatibility for Python 2 for the foreseeable future.
 
 ## Usage
-```bash
+```
 Usage: renotize.py [OPTIONS] PROJECT COMMAND [ARGS]...
+
+  A utility script for quickly and automatically notarizing Ren'Py
+  applications for macOS.
 
   Commands can be abbreviated by the shortest unique string.
 
@@ -21,6 +24,9 @@ Usage: renotize.py [OPTIONS] PROJECT COMMAND [ARGS]...
       unpack-app -> u
       sign-app -> sign-a
       sign-dmg -> sign-d
+
+  The fully automatic process can be started using:
+      renotize -c <path_to_config> <path_to_ZIP_file> full-run
 
 Options:
   -c, --config TEXT
