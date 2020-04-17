@@ -440,7 +440,7 @@ def full_run(ctx):
             break
         elif notarization_status == "invalid":
             logger.error("Notarization check failed, stopping.")
-            break
+            sys.exit(1)
         logger.info("Notarization still in progress, re-checking in 1 minute.")
         time.sleep(60)
 
@@ -456,7 +456,7 @@ def full_run(ctx):
             break
         elif notarization_status == "invalid":
             logger.error("Notarization check failed, stopping.")
-            break
+            sys.exit(1)
         logger.info("Notarization still in progress, re-checking in 1 minute.")
         time.sleep(60)
 
