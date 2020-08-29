@@ -31,7 +31,6 @@ status_pattern = r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \+\d{4}) ([A-z0-9-]+) (s
 
 
 class AliasedGroup(click.Group):
-
     def get_command(self, ctx, cmd_name):
         rv = click.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
@@ -85,10 +84,9 @@ def zipdir(zipname, dirname):
 
 @click.group(cls=AliasedGroup)
 @click.pass_context
-@click.argument("project", required=True, type=str)
-@click.option("-c", "--config", default="config.yaml", type=str)
-@click.option("-d/-nd", "--debug/--no-debug", default=False,
-              help="Print debug information or only regular output")
+@click.argument("project", required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+@click.option("-c", "--config", required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+@click.option("-d", "--debug", is_flag=True, help="Print debug information if given")
 def cli(ctx, project, config, debug):
     """A utility script for quickly and automatically notarizing Ren'Py applications for macOS.
 
@@ -151,7 +149,9 @@ def unpack_app(ctx):
 def sign_app(ctx):
     logger.info("Signing App")
     with open("entitlements.plist", "w") as f:
-        f.write(textwrap.dedent("""
+        f.write(
+            textwrap.dedent(
+                """
             <?xml version="1.0" encoding="UTF-8"?>
             <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
             <plist version="1.0">
@@ -159,20 +159,24 @@ def sign_app(ctx):
                     <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
                     <true/>
                 </dict>
-            </plist>"""))
+            </plist>"""
+            )
+        )
 
     app_path = sorted(glob(os.path.join(ctx.obj["project"], "*.app")))[0]
 
-    cmd = ["codesign",
-           "--entitlements=entitlements.plist",
-           "--options=runtime",
-           "--timestamp",
-           "--verbose",
-           "-s {}".format(ctx.obj["config"]["identity"]),
-           "-f",
-           "--deep",
-           "--no-strict",
-           app_path]
+    cmd = [
+        "codesign",
+        "--entitlements=entitlements.plist",
+        "--options=runtime",
+        "--timestamp",
+        "--verbose",
+        "-s {}".format(ctx.obj["config"]["identity"]),
+        "-f",
+        "--deep",
+        "--no-strict",
+        app_path,
+    ]
     if ctx.obj["debug"]:
         cmd.append("--verbose")
     cmd = " ".join(cmd)
@@ -196,14 +200,16 @@ def notarize_app(ctx):
 
     zipdir(zip_file, app_path)
 
-    cmd = ["xcrun",
-           "altool",
-           ctx.obj["config"]["altool_extra"],
-           "-u {}".format(ctx.obj["config"]["apple_id"]),
-           "-p {}".format(ctx.obj["config"]["password"]),
-           "--notarize-app",
-           "--primary-bundle-id {}".format(ctx.obj["config"]["bundle"]),
-           "-f {}".format(zip_file)]
+    cmd = [
+        "xcrun",
+        "altool",
+        ctx.obj["config"]["altool_extra"],
+        "-u {}".format(ctx.obj["config"]["apple_id"]),
+        "-p {}".format(ctx.obj["config"]["password"]),
+        "--notarize-app",
+        "--primary-bundle-id {}".format(ctx.obj["config"]["bundle"]),
+        "-f {}".format(zip_file),
+    ]
     if ctx.obj["debug"]:
         cmd.append("--verbose")
     cmd = " ".join(cmd)
@@ -232,10 +238,7 @@ def staple_app(ctx):
     logger.info("Stapling App")
     app_path = sorted(glob(os.path.join(ctx.obj["project"], "*.app")))[0]
 
-    cmd = ["xcrun",
-           "stapler",
-           "staple",
-           app_path]
+    cmd = ["xcrun", "stapler", "staple", app_path]
     if ctx.obj["debug"]:
         cmd.append("--verbose")
     cmd = " ".join(cmd)
@@ -246,21 +249,25 @@ def staple_app(ctx):
         logger.debug(str(line.strip(), "utf-8"))
 
     if proc.returncode:
-        logger.error("An error occured while stapling the notarization ticket to the app, run with --debug for more details.")  # noqa: E501
+        logger.error(
+            "An error occured while stapling the notarization ticket to the app, run with --debug for more details."
+        )  # noqa: E501
 
 
 @cli.command()
 @click.pass_context
 def pack_dmg(ctx):
     logger.info("Packing DMG")
-    cmd = ["hdiutil",
-           "create",
-           "-fs HFS+",
-           "-format UDBZ",
-           "-ov",
-           "-volname {}".format(ctx.obj["project"]),
-           "-srcfolder {}".format(ctx.obj["project"]),
-           "{}.dmg".format(ctx.obj["project"])]
+    cmd = [
+        "hdiutil",
+        "create",
+        "-fs HFS+",
+        "-format UDBZ",
+        "-ov",
+        "-volname {}".format(ctx.obj["project"]),
+        "-srcfolder {}".format(ctx.obj["project"]),
+        "{}.dmg".format(ctx.obj["project"]),
+    ]
     cmd = " ".join(cmd)
 
     logger.info("Running hdiutil")
@@ -276,10 +283,12 @@ def pack_dmg(ctx):
 @click.pass_context
 def sign_dmg(ctx):
     logger.info("Signing DMG")
-    cmd = ["codesign",
-           "--timestamp",
-           "-s {}".format(ctx.obj["config"]["identity"]),
-           "-f {}.dmg".format(ctx.obj["project"])]
+    cmd = [
+        "codesign",
+        "--timestamp",
+        "-s {}".format(ctx.obj["config"]["identity"]),
+        "-f {}.dmg".format(ctx.obj["project"]),
+    ]
     if ctx.obj["debug"]:
         cmd.append("--verbose")
     cmd = " ".join(cmd)
@@ -297,14 +306,16 @@ def sign_dmg(ctx):
 @click.pass_context
 def notarize_dmg(ctx):
     logger.info("Notarizing DMG")
-    cmd = ["xcrun",
-           "altool",
-           ctx.obj["config"]["altool_extra"],
-           "-u {}".format(ctx.obj["config"]["apple_id"]),
-           "-p {}".format(ctx.obj["config"]["password"]),
-           "--notarize-app",
-           "--primary-bundle-id {}.dmg".format(ctx.obj["config"]["bundle"]),
-           "-f {}.dmg".format(ctx.obj["project"])]
+    cmd = [
+        "xcrun",
+        "altool",
+        ctx.obj["config"]["altool_extra"],
+        "-u {}".format(ctx.obj["config"]["apple_id"]),
+        "-p {}".format(ctx.obj["config"]["password"]),
+        "--notarize-app",
+        "--primary-bundle-id {}.dmg".format(ctx.obj["config"]["bundle"]),
+        "-f {}.dmg".format(ctx.obj["project"]),
+    ]
     if ctx.obj["debug"]:
         cmd.append("--verbose")
     cmd = " ".join(cmd)
@@ -331,10 +342,7 @@ def notarize_dmg(ctx):
 @click.pass_context
 def staple_dmg(ctx):
     logger.info("Stapling DMG")
-    cmd = ["xcrun",
-           "stapler",
-           "staple",
-           "{}.dmg".format(ctx.obj["project"])]
+    cmd = ["xcrun", "stapler", "staple", "{}.dmg".format(ctx.obj["project"])]
     if ctx.obj["debug"]:
         cmd.append("--verbose")
     cmd = " ".join(cmd)
@@ -345,7 +353,9 @@ def staple_dmg(ctx):
         logger.debug(str(line.strip(), "utf-8"))
 
     if proc.returncode:
-        logger.error("An error occured while stapling the notarization ticket to the DMG, run with --debug for more details.")  # noqa: E501
+        logger.error(
+            "An error occured while stapling the notarization ticket to the DMG, run with --debug for more details."
+        )  # noqa: E501
 
 
 @cli.command()
@@ -353,12 +363,14 @@ def staple_dmg(ctx):
 @click.option("-uid", help="The UID to check the status for", type=str)
 def status(ctx, uid):
     if not uid:
-        cmd = ["xcrun",
-               "altool",
-               ctx.obj["config"]["altool_extra"],
-               "-u {}".format(ctx.obj["config"]["apple_id"]),
-               "-p {}".format(ctx.obj["config"]["password"]),
-               "--notarization-history 0"]
+        cmd = [
+            "xcrun",
+            "altool",
+            ctx.obj["config"]["altool_extra"],
+            "-u {}".format(ctx.obj["config"]["apple_id"]),
+            "-p {}".format(ctx.obj["config"]["password"]),
+            "--notarization-history 0",
+        ]
         cmd = " ".join(cmd)
 
         logger.info("Retrieving general status information")
@@ -384,13 +396,15 @@ def status(ctx, uid):
         latest_entry = sorted(data, key=lambda x: x[0], reverse=True)[0]
         latest_id = latest_entry[1]
 
-    cmd = ["xcrun",
-           "altool",
-           ctx.obj["config"]["altool_extra"],
-           "-u {}".format(ctx.obj["config"]["apple_id"]),
-           "-p {}".format(ctx.obj["config"]["password"]),
-           "--notarization-info {}".format(uid or latest_id),
-           "--output-format json"]
+    cmd = [
+        "xcrun",
+        "altool",
+        ctx.obj["config"]["altool_extra"],
+        "-u {}".format(ctx.obj["config"]["apple_id"]),
+        "-p {}".format(ctx.obj["config"]["password"]),
+        "--notarization-info {}".format(uid or latest_id),
+        "--output-format json",
+    ]
     cmd = " ".join(cmd)
 
     logger.info("Retrieving status details for {}".format(uid or latest_id))
@@ -470,5 +484,5 @@ def full_run(ctx):
     logger.info("Success! The file {}.dmg is now fully notarized and ready to be shipped.".format(ctx.obj["project"]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
