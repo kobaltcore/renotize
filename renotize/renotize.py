@@ -12,8 +12,16 @@ from zipfile import ZipFile, ZIP_DEFLATED
 from subprocess import Popen, PIPE, STDOUT
 
 ### Logging ###
-import logzero
-from logzero import logger
+from rich.logging import RichHandler
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
+)
+
+logger = logging.getLogger("rich")
 
 ### Parsing ###
 import yaml
@@ -84,8 +92,17 @@ def zipdir(zipname, dirname):
 
 @click.group(cls=AliasedGroup)
 @click.pass_context
-@click.argument("project", required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True))
-@click.option("-c", "--config", required=True, type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+@click.argument(
+    "project",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
+)
+@click.option(
+    "-c",
+    "--config",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, resolve_path=True),
+)
 @click.option("-d", "--debug", is_flag=True, help="Print debug information if given")
 def cli(ctx, project, config, debug):
     """A utility script for quickly and automatically notarizing Ren'Py applications for macOS.
@@ -104,20 +121,12 @@ def cli(ctx, project, config, debug):
     """
     ctx.ensure_object(dict)
 
-    logzero.loglevel(logging.DEBUG if debug else logging.INFO)
+    logger.setLevel(logging.DEBUG if debug else logging.INFO)
 
     ctx.obj["debug"] = debug
 
     if not project.endswith(".zip"):
         project += ".zip"
-
-    if not os.path.exists(project):
-        logger.error("The path to the project is incorrect.")
-        sys.exit(1)
-
-    if not os.path.exists(config):
-        logger.error("The path to the config file is incorrect.")
-        sys.exit(1)
 
     ctx.obj["project"] = os.path.splitext(project)[0]
 
@@ -136,7 +145,9 @@ def unpack_app(ctx):
     folder_name = ctx.obj["project"]
 
     if os.path.isdir(folder_name):
-        logger.error("Directory '{}' already exists, please remove it.".format(folder_name))
+        logger.error(
+            "Directory '{}' already exists, please remove it.".format(folder_name)
+        )
         sys.exit(1)
 
     with ZipFile(zip_file, "r") as f:
@@ -187,7 +198,10 @@ def sign_app(ctx):
         logger.debug(str(line.strip(), "utf-8"))
 
     if proc.returncode:
-        logger.error("An error occured while signing the app, run with --debug for more details.")
+        logger.error(
+            "An error occured while signing the app, run with --debug for more details."
+        )
+        sys.exit(1)
 
 
 @cli.command()
@@ -225,9 +239,12 @@ def notarize_app(ctx):
             uid = m.group(1)
 
     if proc.returncode:
-        logger.error("An error occured while notarizing the app, run with --debug for more details.")
+        logger.error(
+            "An error occured while notarizing the app, run with --debug for more details."
+        )
+        sys.exit(1)
 
-    logger.info("The app was submitted. The UID is: {}".format(uid))
+    logger.info("The app was submitted. The UID is: '{}'".format(uid))
 
     return uid
 
@@ -251,7 +268,8 @@ def staple_app(ctx):
     if proc.returncode:
         logger.error(
             "An error occured while stapling the notarization ticket to the app, run with --debug for more details."
-        )  # noqa: E501
+        )
+        sys.exit(1)
 
 
 @cli.command()
@@ -276,7 +294,10 @@ def pack_dmg(ctx):
         logger.debug(str(line.strip(), "utf-8"))
 
     if proc.returncode:
-        logger.error("An error occured while packing the DMG, run with --debug for more details.")
+        logger.error(
+            "An error occured while packing the DMG, run with --debug for more details."
+        )
+        sys.exit(1)
 
 
 @cli.command()
@@ -299,7 +320,10 @@ def sign_dmg(ctx):
         logger.debug(str(line.strip(), "utf-8"))
 
     if proc.returncode:
-        logger.error("An error occured while signing the DMG, run with --debug for more details.")
+        logger.error(
+            "An error occured while signing the DMG, run with --debug for more details."
+        )
+        sys.exit(1)
 
 
 @cli.command()
@@ -331,9 +355,12 @@ def notarize_dmg(ctx):
             uid = m.group(1)
 
     if proc.returncode:
-        logger.error("An error occured while notarizing the DMG, run with --debug for more details.")
+        logger.error(
+            "An error occured while notarizing the DMG, run with --debug for more details."
+        )
+        sys.exit(1)
 
-    logger.info("The DMG was submitted. The UID is: {}".format(uid))
+    logger.info("The DMG was submitted. The UID is: '{}'".format(uid))
 
     return uid
 
@@ -355,7 +382,8 @@ def staple_dmg(ctx):
     if proc.returncode:
         logger.error(
             "An error occured while stapling the notarization ticket to the DMG, run with --debug for more details."
-        )  # noqa: E501
+        )
+        sys.exit(1)
 
 
 @cli.command()
@@ -391,7 +419,10 @@ def status(ctx, uid):
                 divider_found = True
 
         if proc.returncode:
-            logger.error("An error occured while fetching the status, run with --debug for more details.")
+            logger.error(
+                "An error occured while fetching the status, run with --debug for more details."
+            )
+            sys.exit(1)
 
         latest_entry = sorted(data, key=lambda x: x[0], reverse=True)[0]
         latest_id = latest_entry[1]
@@ -417,12 +448,18 @@ def status(ctx, uid):
             logger.debug(line)
         data += line
 
+    if proc.returncode:
+        logger.error(
+            "An error occured while fetching the status, run with --debug for more details."
+        )
+        sys.exit(1)
+
     data = json.loads(data)
 
     try:
         status = data["notarization-info"]["Status"]
-    except:  # noqa: E722
-        logger.error("The UID either does not exist or was not submitted yet.")
+    except Exception:
+        logger.exception("The UID either does not exist or was not submitted yet.")
         return
 
     if status == "success":
@@ -431,10 +468,12 @@ def status(ctx, uid):
         logger.info("The notarization is in progress.")
     else:
         logger.error("The notarization failed.")
-        logger.error("The log file can be accessed here: {}".format(data["notarization-info"]["LogFileURL"]))
-
-    if proc.returncode:
-        logger.error("An error occured while fetching the status, run with --debug for more details.")
+        logger.error(
+            "The log file can be accessed here: {}".format(
+                data["notarization-info"]["LogFileURL"]
+            )
+        )
+        sys.exit(1)
 
     return status
 
@@ -481,7 +520,11 @@ def full_run(ctx):
     os.remove("{}-app.zip".format(ctx.obj["project"]))
     shutil.rmtree(ctx.obj["project"])
 
-    logger.info("Success! The file {}.dmg is now fully notarized and ready to be shipped.".format(ctx.obj["project"]))
+    logger.info(
+        "[green]Success![/green] The file [salmon]{}.dmg[/salmon] is now fully notarized and ready to be shipped.".format(
+            ctx.obj["project"]
+        )
+    )
 
 
 if __name__ == "__main__":
