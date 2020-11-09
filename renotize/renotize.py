@@ -8,8 +8,8 @@ import shutil
 import logging
 import textwrap
 from glob import glob
-from zipfile import ZipFile, ZIP_DEFLATED
 from subprocess import Popen, PIPE, STDOUT
+from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
 ### Logging ###
 from rich.logging import RichHandler
@@ -36,6 +36,21 @@ from tqdm import tqdm
 
 uid_pattern = r"RequestUUID = ([A-z0-9-]+)"
 status_pattern = r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \+\d{4}) ([A-z0-9-]+) (success|invalid|in progress)(?: (\d)\s+(Package (?:Approved|Invalid)))?"  # noqa: E501
+
+
+class PermZipFile(ZipFile):
+    def extract(self, member, path=None, pwd=None):
+        if not isinstance(member, ZipInfo):
+            member = self.getinfo(member)
+
+        if path is None:
+            path = os.getcwd()
+
+        ret_val = self._extract_member(member, path, pwd)
+        attr = member.external_attr >> 16
+        os.chmod(ret_val, attr)
+
+        return ret_val
 
 
 class AliasedGroup(click.Group):
@@ -76,7 +91,7 @@ def zipdir(zipname, dirname):
             path = os.path.join(root, fname)
             total += os.path.getsize(path)
 
-    z = ZipFile(zipname, "w", ZIP_DEFLATED)
+    z = PermZipFile(zipname, "w", ZIP_DEFLATED)
 
     current = 0
     with tqdm(total=total, unit_scale=True, unit="B") as pbar:
@@ -150,7 +165,7 @@ def unpack_app(ctx):
         )
         sys.exit(1)
 
-    with ZipFile(zip_file, "r") as f:
+    with PermZipFile(zip_file, "r") as f:
         for member in tqdm(f.infolist()):
             f.extract(member, folder_name)
 
