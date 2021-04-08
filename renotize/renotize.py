@@ -196,8 +196,7 @@ def sign_app(ctx):
         "--entitlements=entitlements.plist",
         "--options=runtime",
         "--timestamp",
-        "--verbose",
-        "-s {}".format(ctx.obj["config"]["identity"]),
+        "-s '{}'".format(ctx.obj["config"]["identity"]),
         "-f",
         "--deep",
         "--no-strict",
@@ -271,8 +270,6 @@ def staple_app(ctx):
     app_path = sorted(glob(os.path.join(ctx.obj["project"], "*.app")))[0]
 
     cmd = ["xcrun", "stapler", "staple", app_path]
-    if ctx.obj["debug"]:
-        cmd.append("--verbose")
     cmd = " ".join(cmd)
 
     logger.info("Running stapler")
