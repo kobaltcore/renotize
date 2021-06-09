@@ -236,7 +236,8 @@ def notarize_app(ctx):
         "-p {}".format(ctx.obj["config"]["password"]),
         "--notarize-app",
         "--primary-bundle-id {}".format(ctx.obj["config"]["bundle"]),
-        "-f {}".format(zip_file),
+        "-f",
+        zip_file,
     ]
     if ctx.obj["debug"]:
         cmd.append("--verbose")
@@ -258,7 +259,7 @@ def notarize_app(ctx):
         )
         sys.exit(1)
 
-    logger.info("The app was submitted. The UID is: '{}'".format(uid))
+    logger.info("The app was submitted. The UID is: {}".format(uid))
 
     return uid
 
