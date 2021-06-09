@@ -295,7 +295,7 @@ def pack_dmg(ctx):
         "-fs HFS+",
         "-format UDBZ",
         "-ov",
-        "-volname {}".format(ctx.obj["project"]),
+        "-volname {}".format(os.path.basename(ctx.obj["project"])),
         "-srcfolder {}".format(ctx.obj["project"]),
         "{}.dmg".format(ctx.obj["project"]),
     ]
