@@ -507,8 +507,8 @@ def full_run(ctx):
         elif notarization_status == "invalid":
             logger.error("Notarization check failed, stopping.")
             sys.exit(1)
-        logger.info("Notarization still in progress, re-checking in 1 minute.")
-        time.sleep(60)
+        logger.info("Notarization still in progress, re-checking in 30 seconds.")
+        time.sleep(30)
 
     ctx.invoke(staple_app)
     ctx.invoke(pack_dmg)
