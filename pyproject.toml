@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "renotize"
-version = "1.5.3"
+version = "1.6.0"
 description = "A utility script for quickly and automatically notarizing Ren'Py applications for macOS."
 authors = ["CobaltCore <cobaltcore@yandex.com>"]
 license = "MIT"
