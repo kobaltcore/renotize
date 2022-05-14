@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ### System ###
 import os
 import re
@@ -255,7 +256,8 @@ def notarize_app(ctx):
 
     if proc.returncode:
         logger.error(
-            "An error occured while notarizing the app, run with --debug for more details."
+            "An error occured while notarizing the app, run with --debug for more"
+            " details."
         )
         sys.exit(1)
 
@@ -280,7 +282,8 @@ def staple_app(ctx):
 
     if proc.returncode:
         logger.error(
-            "An error occured while stapling the notarization ticket to the app, run with --debug for more details."
+            "An error occured while stapling the notarization ticket to the app, run"
+            " with --debug for more details."
         )
         sys.exit(1)
 
@@ -369,7 +372,8 @@ def notarize_dmg(ctx):
 
     if proc.returncode:
         logger.error(
-            "An error occured while notarizing the DMG, run with --debug for more details."
+            "An error occured while notarizing the DMG, run with --debug for more"
+            " details."
         )
         sys.exit(1)
 
@@ -394,7 +398,8 @@ def staple_dmg(ctx):
 
     if proc.returncode:
         logger.error(
-            "An error occured while stapling the notarization ticket to the DMG, run with --debug for more details."
+            "An error occured while stapling the notarization ticket to the DMG, run"
+            " with --debug for more details."
         )
         sys.exit(1)
 
@@ -433,7 +438,8 @@ def status(ctx, uid):
 
         if proc.returncode:
             logger.error(
-                "An error occured while fetching the status, run with --debug for more details."
+                "An error occured while fetching the status, run with --debug for more"
+                " details."
             )
             sys.exit(1)
 
@@ -463,7 +469,8 @@ def status(ctx, uid):
 
     if proc.returncode:
         logger.error(
-            "An error occured while fetching the status, run with --debug for more details."
+            "An error occured while fetching the status, run with --debug for more"
+            " details."
         )
         sys.exit(1)
 
@@ -523,8 +530,8 @@ def full_run(ctx):
         elif notarization_status == "invalid":
             logger.error("Notarization check failed, stopping.")
             sys.exit(1)
-        logger.info("Notarization still in progress, re-checking in 1 minute.")
-        time.sleep(60)
+        logger.info("Notarization still in progress, re-checking in 30 seconds.")
+        time.sleep(30)
 
     ctx.invoke(staple_dmg)
 
@@ -534,9 +541,8 @@ def full_run(ctx):
     shutil.rmtree(ctx.obj["project"])
 
     logger.info(
-        "[green]Success![/green] The file [salmon]{}.dmg[/salmon] is now fully notarized and ready to be shipped.".format(
-            ctx.obj["project"]
-        )
+        "[green]Success![/green] The file [salmon]{}.dmg[/salmon] is now fully"
+        " notarized and ready to be shipped.".format(ctx.obj["project"])
     )
 
 
